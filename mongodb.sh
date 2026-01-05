@@ -22,10 +22,10 @@ fi
 # Function - will not run unless until we call it explicitly
 VALIDATE(){
     if [ $1 -ne 0 ]; then
-        echo -e "$R ERROR:: $2 installation is Failed $N" | tee -a $LOG_FILE
+        echo -e "$R ERROR:: $2 FAILED $N" | tee -a $LOG_FILE
         exit 1
     else
-        echo -e "$2 $G installation is success $N" | tee -a $LOG_FILE
+        echo -e "$2 $G SUCCESS $N" | tee -a $LOG_FILE
     fi
 }
 
@@ -40,3 +40,9 @@ VALIDATE $? "Enabling Mongo DB"
 
 systemctl start mongod 
 VALIDATE $? "Started Mongo DB"
+
+sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mongod.conf
+VALIDATE $? "Allowing remote connections to MongoDB"
+
+systemctl restart mongod
+VALIDATE $? "Restarted the MongoDB"
