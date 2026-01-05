@@ -10,6 +10,7 @@ N="\e[0m"
 LOG_FOLDER="/var/log/shell-script"
 LOG_FILE_NAME=$( echo $0 | cut -d "." -f1 )
 LOG_FILE="$LOG_FOLDER/$LOG_FILE_NAME.log"
+CURRENT_PATH=$(echo $PWD)
 
 mkdir -p $LOG_FOLDER
 echo "Script started executed at: $(date)" | tee -a $LOG_FILE
@@ -64,7 +65,7 @@ VALIDATE $? "Change the directory"
 npm install 
 VALIDATE $? "Install dependencies" &>>$LOG_FILE
 
-cp catalogue.service /etc/systemd/system/catalogue.service
+cp $CURRENT_PATH/catalogue.service /etc/systemd/system/catalogue.service
 VALIDATE $? "copy the service file"
 
 systemctl daemon-reload
@@ -76,7 +77,7 @@ VALIDATE $? "Enable the service"
 systemctl start catalogue &>>$LOG_FILE
 VALIDATE $? "Start the service"
 
-cp mongo.repo /etc/yum.repos.d/mongo.repo
+cp $CURRENT_PATH/mongo.repo /etc/yum.repos.d/mongo.repo
 VALIDATE $? "copy the mongo repo"
 
 dnf install mongodb-mongosh -y &>>$LOG_FILE
