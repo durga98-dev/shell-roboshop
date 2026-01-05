@@ -29,13 +29,13 @@ VALIDATE(){
     fi
 }
 
-dnf module disable nodejs -y
-VALIDATE $? "Disabling module"
+dnf module disable nodejs -y &>>$LOG_FILE
+VALIDATE $? "Disabling module" 
 
-dnf module enable nodejs:20 -y
+dnf module enable nodejs:20 -y &>>$LOG_FILE
 VALIDATE $? "Enabling required module"
 
-dnf install nodejs -y
+dnf install nodejs -y &>>$LOG_FILE
 VALIDATE $? "Installing Nodejs"
 
 useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop
@@ -50,14 +50,14 @@ VALIDATE $? "Downloading catalogue application"
 cd /app 
 VALIDATE $? "Change the directory"
 
-unzip /tmp/catalogue.zip
+unzip /tmp/catalogue.zip &>>$LOG_FILE
 VALIDATE $? "Unzip catalogue application"
 
 cd /app 
 VALIDATE $? "Change the directory"
 
 npm install 
-VALIDATE $? "Install dependencies"
+VALIDATE $? "Install dependencies" &>>$LOG_FILE
 
 cp catalogue.service /etc/systemd/system/catalogue.service
 VALIDATE $? "copy the service file"
@@ -65,16 +65,16 @@ VALIDATE $? "copy the service file"
 systemctl daemon-reload
 VALIDATE $? "Reload the service"
 
-systemctl enable catalogue 
+systemctl enable catalogue &>>$LOG_FILE
 VALIDATE $? "Enable the service"
 
-systemctl start catalogue
+systemctl start catalogue &>>$LOG_FILE
 VALIDATE $? "Start the service"
 
 cp mongo.repo /etc/yum.repos.d/mongo.repo
 VALIDATE $? "copy the mongo repo"
 
-dnf install mongodb-mongosh -y
+dnf install mongodb-mongosh -y &>>$LOG_FILE
 VALIDATE $? "Install the MongoDB client"
 
 mongosh --host mongodb.durgadevops.fun </app/db/master-data.js
