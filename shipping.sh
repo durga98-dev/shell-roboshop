@@ -11,6 +11,7 @@ SCRIPT_NAME=$( echo $0 | cut -d "." -f1 )
 SCRIPT_DIR=$PWD
 MONGODB_HOST=mongodb.durgadevops.fun
 LOG_FILE="$LOGS_FOLDER/$SCRIPT_NAME.log" # /var/log/shell-script/16-logs.log
+MYSQL_HOST=mysql.durgadevops.fun
 
 mkdir -p $LOGS_FOLDER
 echo "Script started executed at: $(date)" | tee -a $LOG_FILE
@@ -29,13 +30,7 @@ VALIDATE(){ # functions receive inputs through args just like shell script args
     fi
 }
 
-##### NodeJS ####
-dnf module disable nodejs -y &>>$LOG_FILE
-VALIDATE $? "Disabling NodeJS"
-dnf module enable nodejs:20 -y  &>>$LOG_FILE
-VALIDATE $? "Enabling NodeJS 20"
-dnf install nodejs -y &>>$LOG_FILE
-VALIDATE $? "Installing NodeJS"
+dnf install maven -y &>>$LOG_FILE
 
 id roboshop &>>$LOG_FILE
 if [ $? -ne 0 ]; then
@@ -48,8 +43,8 @@ fi
 mkdir -p /app
 VALIDATE $? "Creating app directory"
 
-curl -o /tmp/user.zip https://roboshop-artifacts.s3.amazonaws.com/user-v3.zip &>>$LOG_FILE
-VALIDATE $? "Downloading user application"
+curl -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip &>>$LOG_FILE
+VALIDATE $? "Downloading shipping application"
 
 cd /app 
 VALIDATE $? "Changing to app directory"
@@ -57,18 +52,25 @@ VALIDATE $? "Changing to app directory"
 rm -rf /app/*
 VALIDATE $? "Removing existing code"
 
-unzip /tmp/user.zip &>>$LOG_FILE
-VALIDATE $? "unzip user"
+unzip /tmp/shipping.zip &>>$LOG_FILE
+VALIDATE $? "unzip shipping"
 
-npm install &>>$LOG_FILE
-VALIDATE $? "Install dependencies"
+mvn clean package  &>>$LOG_FILE
+mv target/shipping-1.0.jar shipping.jar 
 
-cp $SCRIPT_DIR/user.service /etc/systemd/system/user.service
-VALIDATE $? "Copy systemctl service"
-
+cp $SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service
 systemctl daemon-reload
-systemctl enable user &>>$LOG_FILE
-VALIDATE $? "Enable user"
+systemctl enable shipping  &>>$LOG_FILE
 
-systemctl restart user
-VALIDATE $? "Restarted user"
+dnf install mysql -y  &>>$LOG_FILE
+
+mysql -h $MYSQL_HOST -uroot -pRoboShop@1 -e 'use cities' &>>$LOG_FILE
+if [ $? -ne 0 ]; then
+    mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/schema.sql &>>$LOG_FILE
+    mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/app-user.sql  &>>$LOG_FILE
+    mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/master-data.sql &>>$LOG_FILE
+else
+    echo -e "Shipping data is already loaded ... $Y SKIPPING $N"
+fi
+
+systemctl restart shipping
