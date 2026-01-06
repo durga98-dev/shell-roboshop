@@ -10,7 +10,7 @@ N="\e[0m"
 LOG_FOLDER="/var/log/shell-script"
 LOG_FILE_NAME=$( echo $0 | cut -d "." -f1 )
 LOG_FILE="$LOG_FOLDER/$LOG_FILE_NAME.log"
-CURRENT_PATH=$(echo $PWD)
+CURRENT_PATH=$PWD
 
 mkdir -p $LOG_FOLDER
 echo "Script started executed at: $(date)" | tee -a $LOG_FILE
@@ -33,10 +33,10 @@ VALIDATE(){
 dnf install mysql-server -y &>>$LOG_FILE
 VALIDATE $? "Installing Mysql server"
 
-systemctl enable mysqld
+systemctl enable mysqld &>>$LOG_FILE
 VALIDATE $? "Enabling Mysql server"
 
-systemctl start mysqld  
+systemctl start mysqld  &>>$LOG_FILE
 VALIDATE $? "Starting Mysql server"
 
 mysql_secure_installation --set-root-pass RoboShop@1
